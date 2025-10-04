@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+node_modules/.cache
+scripts/image-cache.json
+
+# Local service worker build output (if generated)
+public/score-sw.js.map
 
 # Editor directories and files
 .vscode/*
