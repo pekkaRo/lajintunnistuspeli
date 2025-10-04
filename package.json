@@ -1,11 +1,12 @@
 {
+  "private": true,
   "devDependencies": {
     "gh-pages": "^6.3.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "deploy": "vite build && gh-pages -d dist"
+    "dev": "npm --prefix lajintunnistuspeli run dev",
+    "build": "npm --prefix lajintunnistuspeli run build",
+    "preview": "npm --prefix lajintunnistuspeli run preview",
+    "deploy": "npm --prefix lajintunnistuspeli run build && npx gh-pages -d lajintunnistuspeli/dist"
   }
 }
