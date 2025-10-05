@@ -884,7 +884,7 @@ const App = () => {
                   <img
                     src={imageSrc}
                     alt={`${currentSpecies.name} luonnossa`}
-                    className="w-full h-56 md:h-64 object-cover rounded-xl shadow"
+                    className="w-full h-56 md:h-64 object-contain rounded-xl shadow bg-white"
                     loading="lazy"
                   />
                 ) : imageStatus === 'loading' ? (
