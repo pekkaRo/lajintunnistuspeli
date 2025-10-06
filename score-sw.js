@@ -1,5 +1,6 @@
 const SCORE_CACHE = 'score-store-v1';
 const SCORE_KEY = 'score-data';
+const ITEM_STATS_KEY = 'item-stats-data';
 
 async function readScores() {
   const cache = await caches.open(SCORE_CACHE);
@@ -28,10 +29,44 @@ async function writeScores(data) {
   await cache.put(SCORE_KEY, response);
 }
 
+async function readItemStats() {
+  const cache = await caches.open(SCORE_CACHE);
+  const match = await cache.match(ITEM_STATS_KEY);
+  if (!match) {
+    return {};
+  }
+
+  try {
+    return await match.json();
+  } catch (error) {
+    console.warn('[score-sw] Failed to parse stored item stats', error);
+    return {};
+  }
+}
+
+async function writeItemStats(data) {
+  const cache = await caches.open(SCORE_CACHE);
+  const response = new Response(JSON.stringify(data), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store'
+    }
+  });
+
+  await cache.put(ITEM_STATS_KEY, response);
+}
+
 async function broadcastScores(scores) {
   const clientList = await self.clients.matchAll({ type: 'window' });
   for (const client of clientList) {
     client.postMessage({ type: 'SCORES_UPDATED', payload: scores });
+  }
+}
+
+async function broadcastItemStats(itemStats) {
+  const clientList = await self.clients.matchAll({ type: 'window' });
+  for (const client of clientList) {
+    client.postMessage({ type: 'ITEM_STATS_UPDATED', payload: itemStats });
   }
 }
 
@@ -91,6 +126,36 @@ self.addEventListener('message', (event) => {
         const cache = await caches.open(SCORE_CACHE);
         await cache.delete(SCORE_KEY);
         await broadcastScores({});
+      })()
+    );
+  }
+
+  if (data.type === 'SAVE_ITEM_STATS') {
+    event.waitUntil(
+      (async () => {
+        const { itemKey, stats } = data.payload || {};
+        if (!itemKey || !stats) {
+          return;
+        }
+
+        const itemStats = await readItemStats();
+        itemStats[itemKey] = stats;
+
+        await writeItemStats(itemStats);
+        await broadcastItemStats(itemStats);
+      })()
+    );
+  }
+
+  if (data.type === 'REQUEST_ITEM_STATS') {
+    event.waitUntil(
+      (async () => {
+        const itemStats = await readItemStats();
+        if (event.source && 'postMessage' in event.source) {
+          event.source.postMessage({ type: 'ITEM_STATS_UPDATED', payload: itemStats });
+        } else {
+          await broadcastItemStats(itemStats);
+        }
       })()
     );
   }
